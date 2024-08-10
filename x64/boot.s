@@ -21,20 +21,7 @@
 	mov word[si+2], 2
 	call read
 
-	push dword 0x00cf9800
-	push dword 0x0000ffff
-	push dword 0x00cf9200
-	push dword 0x0000ffff
-	push dword 0x00209800
-	push dword 0
-	push dword 0
-	push dword 0
-
-	push esp
-	push 31
-	mov bp, sp
-	lgdt [bp]
-
+	lgdt [gdt]
 	mov eax, cr0
 	bts eax, 0
 	mov cr0, eax
@@ -44,6 +31,13 @@ read:	mov dl, 0x80
 	mov ah, 0x42
 	int 0x13
 	ret
+
+gdt:	dw 31
+	dd gdt+6
+	dq 0
+	dq 0x20980000000000
+	dq 0xcf92000000ffff
+	dq 0xcf98000000ffff
 
 	bits 32
 .32:	mov ax, 16

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-void Close(int *p)
+void close2(int *p)
 {
 	int i = close(p[0]);
 	assert(!i);
@@ -13,18 +13,18 @@ void Close(int *p)
 
 void cat(int *p)
 {
-	int fd = dup2(p[1], STDOUT_FILENO);
-	assert(fd == STDOUT_FILENO);
-	Close(p);
+	int i = dup2(p[1], STDOUT_FILENO);
+	assert(i == STDOUT_FILENO);
+	close2(p);
 	execlp("cat", "cat", "/etc/passwd", NULL);
 	assert(0);
 }
 
 void grep(int *p)
 {
-	int fd = dup2(p[0], STDIN_FILENO);
-	assert(fd == STDIN_FILENO);
-	Close(p);
+	int i = dup2(p[0], STDIN_FILENO);
+	assert(i == STDIN_FILENO);
+	close2(p);
 	execlp("grep", "grep", "root", NULL);
 	assert(0);
 }
@@ -34,13 +34,13 @@ int main(void)
 	int p[2];
 	pipe(p);
 
-	void (*f[])(int *) = { cat, grep };
-	for (int i = 0; i < sizeof(f) / sizeof(*f); i++) {
-		if (fork() == 0)
-			f[i] (p);
-	}
+	if (fork() == 0)
+		cat(p);
 
-	Close(p);
+	if (fork() == 0)
+		grep(p);
+
+	close2(p);
 	while (wait(NULL) != -1) ;
 	perror("");
 }

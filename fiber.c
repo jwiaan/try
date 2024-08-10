@@ -20,6 +20,39 @@ struct channel {
 	struct queue data, wait;
 } channel = {.data.tail = &channel.data.head,.wait.tail = &channel.wait.head };
 
+#define save(m) asm("push %%rdi;push %%rbx;push %%rbp;push %%r12;push %%r13;push %%r14;push %%r15;mov %%rsp,%0":"=m"(m))
+#define load(m) asm("mov %0,%%rsp;pop %%r15;pop %%r14;pop %%r13;pop %%r12;pop %%rbp;pop %%rbx;pop %%rdi;ret"::"m"(m))
+__attribute__((naked))
+void Switch(struct node *curr)
+{
+	save(curr->p);
+	load(prev->next->p);
+}
+
+void yield(void)
+{
+	prev = prev->next;
+	Switch(prev);
+}
+
+void insert(struct node *n)
+{
+	n->next = prev->next;
+	prev->next = n;
+}
+
+struct node *erase(void)
+{
+	struct node *curr = prev->next;
+	prev->next = curr->next;
+	return curr;
+}
+
+void end(void)
+{
+	Switch(erase());
+}
+
 _Bool empty(const struct queue *q)
 {
 	return !q->head;
@@ -39,34 +72,6 @@ struct node *pop(struct queue *q)
 		q->tail = &q->head;
 
 	return n;
-}
-
-void insert(struct node *n)
-{
-	n->next = prev->next;
-	prev->next = n;
-}
-
-struct node *erase(void)
-{
-	struct node *curr = prev->next;
-	prev->next = curr->next;
-	return curr;
-}
-
-#define save(m) asm("push %%rdi;push %%rbx;push %%rbp;push %%r12;push %%r13;push %%r14;push %%r15;mov %%rsp,%0":"=m"(m))
-#define load(m) asm("mov %0,%%rsp;pop %%r15;pop %%r14;pop %%r13;pop %%r12;pop %%rbp;pop %%rbx;pop %%rdi;ret"::"m"(m))
-__attribute__((naked))
-void Switch(struct node *curr)
-{
-	save(curr->p);
-	load(prev->next->p);
-}
-
-void yield(void)
-{
-	prev = prev->next;
-	Switch(prev);
 }
 
 void wait(struct queue *q)
@@ -96,11 +101,6 @@ void put(struct channel *c, struct node *n)
 	push(&c->data, n);
 	if (!empty(&c->wait))
 		notify(&c->wait);
-}
-
-void end(void)
-{
-	Switch(erase());
 }
 
 void init(union fiber *f, void (*rip)(void *), void *rdi)

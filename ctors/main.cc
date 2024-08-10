@@ -14,4 +14,7 @@ private:
   char s[5] = "~C@\n";
 } c0('0'), c1('1');
 
-int main() { print("main\n", 5); }
+int main() {
+  print("main\n", 5);
+  return 19;
+}

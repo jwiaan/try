@@ -1,20 +1,18 @@
-void *__dso_handle;
-int i;
+void init(void);
+int main(void);
+
 struct {
 	void (*f)(void *);
 	void *p;
-} d[3];
+} d[2];
 
-void __cxa_atexit(void f(void *), void *p)
+int i, __dso_handle;
+
+void __cxa_atexit(void (*f)(void *), void *p)
 {
 	d[i].f = f;
 	d[i].p = p;
 	++i;
-}
-
-void exit2(void)
-{
-	asm("syscall"::"a"(60), "D"(2));
 }
 
 void exit(int n)
@@ -22,7 +20,7 @@ void exit(int n)
 	while (--i > -1)
 		d[i].f(d[i].p);
 
-	exit2();
+	asm("syscall"::"a"(60), "D"(n));
 }
 
 void _start(void)
